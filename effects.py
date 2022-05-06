@@ -3,6 +3,9 @@ from utils import *
 ## sunt independete de FS. Fs doar influenteaza cate puncte pe secunda.
 ## sau in cazul unui numpy array doar numarul total de valori din array
 
+
+################ distortotion ################
+
 def infiniteClip(t, mysin, draw = False):
 
     N = len(mysin)
@@ -11,12 +14,12 @@ def infiniteClip(t, mysin, draw = False):
 
         if mysin[n] >= 0:
             #distort[n] = 1
-            distort[n] = 2**15 - 1 ### vezi aici ca se aude cam cu multe armonici
+            distort[n] = 2**15 - 1 
         else:
             distort[n] = 0
 
     distort = np.array(distort)
-    
+
     if draw == True :
         plotSignal(t, distort, "Infinite Clip")
         
@@ -60,3 +63,33 @@ def fullwaveRectification(t, mysin, draw = False):
         plotSignal(t, full, "Full Wave Rect")
     
     return full
+
+
+def cubicDistortion(t, mysin, a, draw = False):
+
+    N = len(mysin)
+    cubic = [x-x for x in range(N)]
+
+    print("## Starting signal processing : ##")
+    print("THIS IS a ", a)
+
+    for n in range(N):
+
+        #cubic[n] = np.int16(mysin[n] - a*(1/3)*(mysin[n]**3))
+        cubic[n] = np.int16(mysin[n] - (mysin[n]**3)//3)
+        #cubic[n] = np.int16(mysin[n])
+    
+    print("## Ending Signal Processing ##")
+    cubic = np.array(cubic)
+
+    if draw == True:
+        plotSignal(t, cubic, "Cubic Distort")
+    
+    return cubic
+
+# def piecewiseOverdrive(t, mysin, draw = False):
+
+#     N = len(mysin)
+#     overdrive = 
+
+## bitreduction ??

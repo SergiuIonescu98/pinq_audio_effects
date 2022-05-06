@@ -33,6 +33,7 @@ def plotSignal(t, signal, title="Proccesed Signal"):
 
 
 def _struct_format(sample_width, nb_samples):
+    #return {1:"%db", 2:"<%dh", 4:"<%dl"}[sample_width] % nb_samples
     return {1:"%db", 2:"<%dh", 4:"<%dl"}[sample_width] % nb_samples
 
 def read_samples(wave_file):
@@ -70,8 +71,10 @@ def read_and_process_wav(filename, function_process, draw=False):
         seconds = (len(f_samples)//f.getframerate())
         print("These are the seconds", seconds)
         t = np.linspace(0, seconds, len(f_samples), False)
-
-    f_samples = function_process(t, f_samples, draw)
+    
+    a = 0.2
+    f_samples = function_process(t, f_samples, a, draw)
+    #f_samples = function_process(t, f_samples, draw)
     
     return (f_samples, f.getframerate())
 
