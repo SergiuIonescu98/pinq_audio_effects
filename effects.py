@@ -1,5 +1,8 @@
 from utils import *
 
+## sunt independete de FS. Fs doar influenteaza cate puncte pe secunda.
+## sau in cazul unui numpy array doar numarul total de valori din array
+
 def infiniteClip(t, mysin, draw = False):
 
     N = len(mysin)
@@ -7,7 +10,8 @@ def infiniteClip(t, mysin, draw = False):
     for n in range(N):
 
         if mysin[n] >= 0:
-            distort[n] = 1
+            #distort[n] = 1
+            distort[n] = 2**15 - 1 ### vezi aici ca se aude cam cu multe armonici
         else:
             distort[n] = 0
 
