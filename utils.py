@@ -3,7 +3,7 @@ from scipy.io import wavfile
 import matplotlib.pyplot as plot
 import simpleaudio as sa
 import struct
-
+import wave
 
 #### independent de secunde
 def playNote_16b(note, Fs):
@@ -29,6 +29,7 @@ def plotSignal(t, signal, title="Proccesed Signal"):
 
 
 
+#############################################
 
 
 def _struct_format(sample_width, nb_samples):
@@ -49,3 +50,60 @@ def write_samples(wave_file, samples, sample_width):
     frame_data = struct.pack(format, *samples)
     wave_file.writeframes(frame_data)
     return wave_file
+
+
+################ WAV READ AND WRITE ##############
+
+
+
+def read_and_process_wav(filename, function_process, draw=False):
+    
+    print("### READING AND PROCESSING WAV ###")
+
+    f = wave.open(filename)
+    f_samples = read_samples(f)
+    f_samples= np.array(f_samples)
+
+    ## calculating time vector for drawing ##
+    t = 0
+    if draw == True :
+        seconds = (len(f_samples)//f.getframerate())
+        print("These are the seconds", seconds)
+        t = np.linspace(0, seconds, len(f_samples), False)
+
+    f_samples = function_process(t, f_samples, draw)
+    
+    return (f_samples, f.getframerate())
+
+
+
+def write_to_wav(filename, f_samples, framerate, effect="", play= False):
+
+    print("### WRITING TO WAV ###")
+
+    filename = str(filename) + "_" + effect
+    obj = wave.open(filename, 'w')
+    obj.setnchannels(2)
+    obj.setsampwidth(2)
+    obj.setframerate(framerate)
+
+    obj = write_samples(obj, f_samples, 2)
+
+    # for i in range(len(f_samples)):
+    #     value = f_samples[i]
+    #     data = struct.pack('<h', value)
+    #     obj.writeframesraw(data)
+
+    obj.close()
+    
+    if play == True :
+        play_wav(filename)
+
+
+def play_wav(filename):
+
+    print("### PLAYING WAV ###")
+
+    wave_obj = sa.WaveObject.from_wave_file(filename)
+    play_obj = wave_obj.play()
+    play_obj.wait_done()  # Wait until sound has finished playing
