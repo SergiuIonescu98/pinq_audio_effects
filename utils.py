@@ -4,7 +4,7 @@ import matplotlib.pyplot as plot
 import simpleaudio as sa
 import struct
 import wave
-
+import soundfile
 #### independent de secunde
 def playNote_16b(note, Fs):
 
@@ -56,8 +56,9 @@ def write_samples(wave_file, samples, sample_width):
 ################ WAV READ AND WRITE ##############
 
 
+# control = [ 0 1 ]
 
-def read_and_process_wav(filename, function_process, control = False, draw=False):
+def read_and_process_wav(filename, function_process=None, control = -1, draw=False):
     
     print("### READING AND PROCESSING WAV ###")
 
@@ -72,27 +73,36 @@ def read_and_process_wav(filename, function_process, control = False, draw=False
         print("These are the seconds", seconds)
         t = np.linspace(0, seconds, len(f_samples), False)
     
-    if control == True :
-        a = 0.2
-        f_samples = function_process(t, f_samples, a, draw)
-    else :
-        f_samples = function_process(t, f_samples, draw)
+    
+    if function_process != None:
+        if control >= 0 :
+            a = control
+            f_samples = function_process(t, f_samples, a, draw)
+        elif control == -1:
+            f_samples = function_process(t, f_samples, draw)
+
+    
     
     return (f_samples, f.getframerate())
 
 
 
 
-def write_raw(filename, f_samples, effect=""):
+def write_raw(filename, f_samples, normalise = False, effect="", typeB='int16'):
     print("### WRITING RAW FILE ###")
 
+    raw_samples = f_samples
+    
+    if normalise == True:
+        raw_samples = normalise_16b(raw_samples)
+
     filename = str(filename) + "_" + effect + ".raw"
-    f_samples.astype('int32').tofile(filename)
-    # file = open(filename, "w")
-    # print("## STRING ##")
-   
-    # file.write(str(f_samples))
-    # file.close()
+    raw_samples.astype(typeB).tofile(filename) # cred ca daca vrei pe 16 trebuie sa si normalizezi
+                                               # si cred ca mai e si din cauza inregistrarii. foarte posibil
+                                               # daca ai int ul prea mic canta de 2 ori mai lent . 
+                                               # dacai ai int ul mai mare canta de 2 ori mai repede pentru ca va considera
+                                               # 2 esantioane de 16 ca fiind unul singur de 32.
+
 
 def write_to_wav(filename, f_samples, framerate, effect="", play= False):
 
@@ -103,14 +113,9 @@ def write_to_wav(filename, f_samples, framerate, effect="", play= False):
     obj.setnchannels(2)
     obj.setsampwidth(2)
     obj.setframerate(framerate)
-
+    f_samples = normalise_16b(f_samples)
+    
     obj = write_samples(obj, f_samples, 2)
-
-    # for i in range(len(f_samples)):
-    #     value = f_samples[i]
-    #     data = struct.pack('<h', value)
-    #     obj.writeframesraw(data)
-
     obj.close()
     
     if play == True :
@@ -124,3 +129,38 @@ def play_wav(filename):
     wave_obj = sa.WaveObject.from_wave_file(filename)
     play_obj = wave_obj.play()
     play_obj.wait_done()  # Wait until sound has finished playing
+
+
+def normalise_16b(f_samples): ## Este esentiala in cazul in care ai esantioane peste 32 de biti.
+
+    ### MUUUUCH BETTER this way ### Parte din gajait e si din cauza normalizarii cred.
+    #max_sample = np.max(np.abs(f_samples))
+    for i in range(len(f_samples)): 
+        if f_samples[i] > 2**15 - 1:
+            f_samples[i] = 2**15 - 1
+            #f_samples[i] = f_samples[i] * (2**15 - 1) / max_sample
+    ################################
+    # f_samples = f_samples * (2**15 - 1) / np.max(np.abs(f_samples)) ### !! very important. Daca ai pe 32 iti strica prea mult.
+    
+    #########################################################################
+    
+    f_samples = f_samples.astype(np.int16)
+    return f_samples
+
+
+
+
+###############################################
+
+def read_and_process_echo(filename, function_process, bpm, noteDiv, b):
+    
+    print("### READING AND PROCESSING WAV ###")
+
+    f = wave.open(filename)
+    f_samples = read_samples(f)
+    f_samples= np.array(f_samples)
+
+    ## calculating time vector for drawing ##
+    f_samples = function_process([f.getframerate(), bpm, noteDiv], b, f_samples)
+    
+    return (f_samples, f.getframerate())
