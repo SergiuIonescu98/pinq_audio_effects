@@ -76,11 +76,17 @@ def cubicDistortion(t, mysin, a, draw = False):
     for n in range(N):
 
         #cubic[n] = np.int16(mysin[n] - a*(1/3)*(mysin[n]**3))
-        cubic[n] = np.int16(mysin[n] - (mysin[n]**3)//3)
+        cubic[n] = mysin[n] - ((mysin[n]**3)/6) # poate da valori prea mari
+        #mai mari de int16 si strica
         #cubic[n] = np.int16(mysin[n])
+        
+        ## micsoram gainul
+
+        #cubic[n] = cubic[n] / 5
     
     print("## Ending Signal Processing ##")
     cubic = np.array(cubic)
+    print(cubic)
 
     if draw == True:
         plotSignal(t, cubic, "Cubic Distort")

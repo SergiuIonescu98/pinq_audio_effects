@@ -57,7 +57,7 @@ def write_samples(wave_file, samples, sample_width):
 
 
 
-def read_and_process_wav(filename, function_process, draw=False):
+def read_and_process_wav(filename, function_process, control = False, draw=False):
     
     print("### READING AND PROCESSING WAV ###")
 
@@ -72,19 +72,33 @@ def read_and_process_wav(filename, function_process, draw=False):
         print("These are the seconds", seconds)
         t = np.linspace(0, seconds, len(f_samples), False)
     
-    a = 0.2
-    f_samples = function_process(t, f_samples, a, draw)
-    #f_samples = function_process(t, f_samples, draw)
+    if control == True :
+        a = 0.2
+        f_samples = function_process(t, f_samples, a, draw)
+    else :
+        f_samples = function_process(t, f_samples, draw)
     
     return (f_samples, f.getframerate())
 
 
 
+
+def write_raw(filename, f_samples, effect=""):
+    print("### WRITING RAW FILE ###")
+
+    filename = str(filename) + "_" + effect + ".raw"
+    f_samples.astype('int32').tofile(filename)
+    # file = open(filename, "w")
+    # print("## STRING ##")
+   
+    # file.write(str(f_samples))
+    # file.close()
+
 def write_to_wav(filename, f_samples, framerate, effect="", play= False):
 
     print("### WRITING TO WAV ###")
 
-    filename = str(filename) + "_" + effect
+    filename = str(filename) + "_" + effect + ".wav"
     obj = wave.open(filename, 'w')
     obj.setnchannels(2)
     obj.setsampwidth(2)

@@ -20,18 +20,18 @@ from effects import *
 
 
 ################ guitar test #################################
-file_in = '/home/ionesc_s/Projects/fpga_music/dry_guitar2.wav'
-file_out = 'out.wav'
+file_in = 'dry_guitar2.wav'
+file_out = 'out'
 
 ## read and process wav
 #f_samples, framerate = read_and_process_wav(file_in, infiniteClip, draw=False)
-f_samples, framerate = read_and_process_wav(file_in, cubicDistortion, draw=False)
+f_samples, framerate = read_and_process_wav(file_in, cubicDistortion, control= True, draw=False)
 
 # f_samples, framerate = read_and_process_wav(filename, fullwaveRectification)
 
 ## write to new wav the proccesed signal
-write_to_wav(file_out, f_samples, framerate, effect="cubicDistortion", play=True)
-
+#write_to_wav(file_out, f_samples, framerate, effect="cubicDistortion", play=True)
+write_raw(file_out, f_samples, effect="cubic")
 
 
 
