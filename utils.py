@@ -94,6 +94,7 @@ def write_raw(filename, f_samples, normalise = False, effect="", typeB='int16'):
     raw_samples = f_samples
     
     if normalise == True:
+        print("## Normalising ##")
         raw_samples = normalise_16b(raw_samples)
 
     filename = str(filename) + "_" + effect + ".raw"

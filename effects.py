@@ -101,7 +101,8 @@ def cubicDistortion(t, mysin, a, draw = False):
 
 
 
-################### echo effects  #### vezi care era faza cu convolutia. Poate pe aia o poti optimiza !!!
+################### echo effects  ######################## 
+# vezi care era faza cu convolutia. Poate pe aia o poti optimiza !!!
 
 
 # timeS -> timpul in secunde,msecunde etc
@@ -174,7 +175,126 @@ def feedback_echo(tempo_param, a, x):
 
 def myConv():
     print("This is my conv")
+
+
+
+####################### DELAY BUFFERS #############################
         
 
 
+def linearBuffer(x, blen):
+
+    buffer = np.zeros(blen) 
+                            ## bufferul poate fi mai mare ca delayul, dar mai e nevoie
+                            ## de o variabila delay ca sa stii de unde citesti 
+    N = np.size(x)
+    out = np.zeros([N])
+
+    for n in range(N):
+
+        out[n] = buffer[-1] # ultimul element din buffer vine primul la iesire
+                            # sau buffer[delay] in cazul in care buffer e mai mare
+        buffer = np.append(x[n], buffer[0:-1]) # shiftare la dreapta
+
+    np.disp(['The original signal was: ', str(x)])
+    np.disp(['The final output signal is: ', str(out)])
+
+    return out
+
+def firdelayBuffer(x, fs, bpm, noteDiv, fbGain):
+
+    delay = tempo_to_samples(fs, bpm, noteDiv)
+    buffer = np.zeros(delay)
     
+    N = np.size(x)
+    out = np.zeros([N])
+
+    for n in range(N):
+        out[n] = x[n]+ fbGain*buffer[-1]
+        buffer = np.append(x[n], buffer[0:-1])
+
+    return out
+
+
+def circularBuffer(x_sample, buffer, delay, index):
+
+    len_b = len(buffer)
+
+    indexC = ((index) % len_b) # calculeaza indexC curent unde adaugi
+    indexD = ((index - delay) % len_b) # calculeaza indexD curent pe unde ies valori
+
+    # print("##")
+    # print("Index C ", indexC)
+    # print("Index D ", indexD)
+    # print("##\n")
+
+    y_sample = buffer[indexD]
+    buffer[indexC] = x_sample ## stocheaza in indexC curent valoarea curenta de la X
+
+    return y_sample
+
+
+def circularechoBuffer(x_sample, buffer, delay, index, fbGain):
+
+    len_b = len(buffer)
+
+    indexC = ((index) % len_b) # calculeaza indexC curent unde adaugi
+    indexD = ((index - delay) % len_b) # calculeaza indexD curent pe unde ies valori
+
+    # print("##")
+    # print("Index C ", indexC)
+    # print("Index D ", indexD)
+    # print("##\n")
+
+    y_sample = fbGain*buffer[indexD] + x_sample # aduni aici ca sa fie ecou
+    buffer[indexC] = x_sample ## stocheaza in indexC curent valoarea curenta de la X
+
+    return y_sample
+
+
+################################# vibrato Effect ########
+
+
+
+def vibratoEffect(x, buffer, Fs, n, depth, rate):
+    # Calculate lfo(low freq osc) for current sample
+    t = n/Fs
+    lfo = (depth/2) * np.sin(2 * np.pi * rate * t) + depth
+    # depth = amplitutde of lfo -> how wide the range of pitches are changed
+    # rate = freq of lfo -> how fast the pitch change
+    # pitch = freq ? ( pitch senzatia subiectiva de frecevnta )
+
+    # Determine indexes for circular buffer
+    N = len(buffer)
+    indexC = np.mod(n, N)  # Current index in circular buffer
+
+
+    ######################################
+    # fractional delay with interpolation 
+    # circular buffer getting out the sample
+
+    fracDelay = np.mod(n-lfo, N)    # Delay index in circular buffer 
+                                    ### aici e folosit LFO
+                                    ### LFO e folosit in selectia de INDEX din BUFFER
+
+    intDelay = int(np.floor(fracDelay))  # Fractional delay indices
+    frac = fracDelay - intDelay
+
+    nextSamp = np.mod(intDelay, N) - 1  # Next index in circular buffer
+    # face combinatie liniara intre indexul curent de iesire si indexul urmator
+    out = (1-frac) * buffer[intDelay-1] + frac * buffer[nextSamp]
+    
+    
+    ################################################
+    # Store the current output in appropriate index
+    buffer[indexC] = x
+
+    return out, buffer
+
+
+## trebuie sa inteleg mai bine fractional delay....atata tot. La fel e si cu chorus
+## SI GATAAAA cu efectele momentan ( poate mai paralelizezi ceva efecte paralele )
+## vezi dupa asa ca idee generala cum faci audio-in audio-out in fpga
+## vezi ce inseamna imbunatatiri in python
+## vezi cum a facut aia alg A*
+## vezi cum faci cu HDMI doar asa ca si plan ca sa nu te arunci degeaba
