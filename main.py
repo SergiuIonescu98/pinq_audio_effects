@@ -185,3 +185,7 @@ for n in range(N):
 
 out = out * 10000
 write_raw(filename = file_out, f_samples = out, effect = "vibrato")
+
+################ fractional delay
+
+# linearInterpolationDelay()

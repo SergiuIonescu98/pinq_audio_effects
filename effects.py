@@ -1,3 +1,4 @@
+from multiprocessing.context import SpawnContext
 from utils import *
 
 ## sunt independete de FS. Fs doar influenteaza cate puncte pe secunda.
@@ -255,11 +256,17 @@ def circularechoBuffer(x_sample, buffer, delay, index, fbGain):
 ################################# vibrato Effect ########
 
 
+## n e index curent din semnal
+## N mae e lungime buffer
 
 def vibratoEffect(x, buffer, Fs, n, depth, rate):
     # Calculate lfo(low freq osc) for current sample
+    print("## CALLING VIBRATO EFFECT ###")
     t = n/Fs
-    lfo = (depth/2) * np.sin(2 * np.pi * rate * t) + depth
+    lfo = (depth/2) * np.sin(2 * np.pi * rate * t) + depth ## iti returneaza o singura valoarea
+    ## ptr ca t nu e un vector. Ci e un moment de timp ce variaza dupa frecveta de esantionare. n/Fs
+    print("## LFO VALUE ##")
+    print(lfo)
     # depth = amplitutde of lfo -> how wide the range of pitches are changed
     # rate = freq of lfo -> how fast the pitch change
     # pitch = freq ? ( pitch senzatia subiectiva de frecevnta )
@@ -276,9 +283,14 @@ def vibratoEffect(x, buffer, Fs, n, depth, rate):
     fracDelay = np.mod(n-lfo, N)    # Delay index in circular buffer 
                                     ### aici e folosit LFO
                                     ### LFO e folosit in selectia de INDEX din BUFFER
-
-    intDelay = int(np.floor(fracDelay))  # Fractional delay indices
-    frac = fracDelay - intDelay
+                                    ### acel n-lfo poate fi interpretat
+                                    ### cati indecsi vrei sa dai in spate
+                                    ### cat de intarziat sa fie semnalul
+    print("#####")
+    print(fracDelay)
+    print("#####")
+    intDelay = int(np.floor(fracDelay))  # Fractional delay indices---cat sa fie delayul. Indexul de iesire cum ar fi
+    frac = fracDelay - intDelay ## cat la suta ne aproiem de urmatorul delay fata de cel normal
 
     nextSamp = np.mod(intDelay, N) - 1  # Next index in circular buffer
     # face combinatie liniara intre indexul curent de iesire si indexul urmator
@@ -291,10 +303,47 @@ def vibratoEffect(x, buffer, Fs, n, depth, rate):
 
     return out, buffer
 
+####### iar de fapt fractional delay nu inseamna decat cum variezi trecerea de n la n + 1- . BA NuUU
+####### cat de mare sa fie ponderea n+fract. 
+##### alta e filosofia. TU ai un delay care variaza. Dar tu vrei ca el sa varieze uniform
+#### nu doar sa treaca de la un delay de n la n+1 dupa n+2. Vrei un delay fin. el tot creste. Poate si pana la infinit
+#### ca el sa creasca fin vom lua si delayuri intre n-uri. Dar ce valori scoatem ptr valori intre indecsi ?
+#### si aici vine fractional delay care calculeaza valorea interpolata ( ca pana la urma orice fractie poate fi intre 2 intregi)
+#### si lfo de fapt imi face delayuri 75 +- 32 inclusiv valorile intre cele intregi. Si fractional interp
+### ma ajuta sa le calculez.
+### bun si inainte cu un circular buffer normal...memorai la fiecare iteratie din semnalul tau de intrare bufferul nou
+### faceai for si fiecare iteratie bagai ceva in buffer si scoteai pe alt index ( delayul )
+### dar acum ai tot o singura iteratie. Insa n am inteles cum scoti ? Ca acum delayul e un sinus. Nu pare a fi un for in for
+### pai da. Pentru ca de fapt acel sinus...variaza in timp dupa ce t ii dau eu. si t-ul e raportat la esantion adica timp
 
-## trebuie sa inteleg mai bine fractional delay....atata tot. La fel e si cu chorus
+
 ## SI GATAAAA cu efectele momentan ( poate mai paralelizezi ceva efecte paralele )
 ## vezi dupa asa ca idee generala cum faci audio-in audio-out in fpga
 ## vezi ce inseamna imbunatatiri in python
 ## vezi cum a facut aia alg A*
 ## vezi cum faci cu HDMI doar asa ca si plan ca sa nu te arunci degeaba
+
+
+def linearInterpolationDelay():
+
+    x = np.append(1, np.zeros(9))  # Horizontal for displaying in command window
+
+    fracDelay = 3.2  # Fractional delay length in samples
+    intDelay = int(np.floor(fracDelay))  # Round down to get the previous (3)
+    frac = fracDelay - intDelay  # Find the fractional amount (0.2)
+
+    buffer = np.zeros(5)  # len(buffer) >= ceil(fracDelay)
+    N = len(x)
+
+    out = np.zeros(N)
+
+    # Series Fractional Delay
+    for n in range(N):
+        out[n] = (1-frac) * buffer[intDelay-1] + frac * buffer[intDelay]
+        buffer = np.append(x[n], buffer[0:-1])
+        # buffer[1:] = buffer[0:-1]
+        # buffer[0] = x[n]
+
+    # Compare the input and output signals
+    np.disp(['The orig. input signal was: ', str(x)])
+    np.disp(['The final output signal is: ', str(out)])
