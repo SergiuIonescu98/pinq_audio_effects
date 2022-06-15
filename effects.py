@@ -315,7 +315,7 @@ def vibratoEffect(x, buffer, Fs, n, depth, rate):
 ### faceai for si fiecare iteratie bagai ceva in buffer si scoteai pe alt index ( delayul )
 ### dar acum ai tot o singura iteratie. Insa n am inteles cum scoti ? Ca acum delayul e un sinus. Nu pare a fi un for in for
 ### pai da. Pentru ca de fapt acel sinus...variaza in timp dupa ce t ii dau eu. si t-ul e raportat la esantion adica timp
-
+### variind delayul de fapt variaza frecventa. Exista o demonstratatie
 
 ## SI GATAAAA cu efectele momentan ( poate mai paralelizezi ceva efecte paralele )
 ## vezi dupa asa ca idee generala cum faci audio-in audio-out in fpga
@@ -347,3 +347,43 @@ def linearInterpolationDelay():
     # Compare the input and output signals
     np.disp(['The orig. input signal was: ', str(x)])
     np.disp(['The final output signal is: ', str(out)])
+
+
+#################
+
+def chorusEffect(x, buffer, Fs, n, depth, rate, predelay, wet):
+    # Calculate time in seconds for current sample
+    t = n/Fs
+    lfoMS = depth * np.sin(2 * np.pi * rate * t) + predelay
+    lfoSamples = (lfoMS/1000) * Fs
+
+    # Wet/dry mix
+    mixPercent = wet  # 0 = only dry, 100 = only wet
+    mix = mixPercent/100
+
+    fracDelay = lfoSamples
+    intDelay = int(np.floor(fracDelay))
+    frac = fracDelay - intDelay
+
+    # Store dry and wet signals
+    drySig = x
+    wetSig = (1-frac) * buffer[intDelay-1] + frac * buffer[intDelay]
+
+    # Blend parallel paths
+    out = (1-mix) * drySig + mix * wetSig
+
+    # Linear buffer implemented
+    buffer = np.append(x, buffer[0:-1])
+    # buffer[1:] = buffer[0:-1]
+    # buffer[0] = x
+
+    return out, buffer
+
+# cu delay variat in paralel de maxim 50 ms creeaza un efect de cor
+# ptr ca in cor nimeni nu canta perfect..exista mini shiftari de pitch
+
+
+
+#### poate faci efectul ala cu filtru biquad de wah wah pedal
+#### si pastrezi efecte de vibrato chorus wah si distorsie cu parametrii poate
+#### ca astea cuprind cam tot ce ai invatat

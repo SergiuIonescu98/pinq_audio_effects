@@ -85,7 +85,9 @@ reverb_in = 'Audio Files/reverbIR.wav'
 
 # yLeft = yLeft * 10000 # mai trebuie si gain
 
-# write_raw(file_out, yLeft, Fs, effect="reverb_conv")
+# write_raw(file_out, yLeft, effect="reverb_conv")
+# print("## WRITING WAV ##")
+# write_to_wav(file_out, yLeft, Fs, effect="reverb_conv", play=False)
 
 
 
@@ -160,32 +162,58 @@ reverb_in = 'Audio Files/reverbIR.wav'
 ############# vibrato effect ##########
 
 
-x, Fs = soundfile.read(file_in) # Input signal
-Ts = 1/Fs
-N = len(x)
+# x, Fs = soundfile.read(file_in) # Input signal
+# Ts = 1/Fs
+# N = len(x)
 
-# Initialize the delay buffer
-maxDelay = 1000  # Samples
-buffer = np.zeros([maxDelay])
+# # Initialize the delay buffer
+# maxDelay = 1000  # Samples
+# buffer = np.zeros([maxDelay])
 
-# LFO parameters
-t = np.arange(0, N) * Ts
-rate = 4  # Frequency of LFO in Hz
-depth = 75  # Range of samples of delay
+# # LFO parameters
+# t = np.arange(0, N) * Ts
+# rate = 4  # Frequency of LFO in Hz
+# depth = 75  # Range of samples of delay
 
-# Initialize output signal
-out = np.zeros([N])
+# # Initialize output signal
+# out = np.zeros([N])
 
-# aici e fix ca la circular buffer. Iei pe rand esantion cu esantion
-for n in range(N):
-    out[n], buffer = vibratoEffect(x[n], buffer, Fs, n, depth, rate)
-    if n == 70:
-        out[n], buffer = vibratoEffect(x[n], buffer, Fs, n, depth, rate)
+# # aici e fix ca la circular buffer. Iei pe rand esantion cu esantion
+# for n in range(N):
+#     out[n], buffer = vibratoEffect(x[n], buffer, Fs, n, depth, rate)
+#     if n == 70:
+#         out[n], buffer = vibratoEffect(x[n], buffer, Fs, n, depth, rate)
 
 
-out = out * 10000
-write_raw(filename = file_out, f_samples = out, effect = "vibrato")
+# out = out * 10000
+# write_raw(filename = file_out, f_samples = out, effect = "vibrato")
 
 ################ fractional delay
 
 # linearInterpolationDelay()
+
+########## chorus effect ####
+
+
+# x, Fs = soundfile.read(file_in)
+# Ts = 1/Fs
+
+# maxDelay = int(np.ceil(0.05*Fs))  # Maximum delay of 50 ms
+# buffer = np.zeros(maxDelay)
+
+# rate = 0.6  # Hz (frequency of LFO)
+# depth = 5  # Milliseconds (amplitude of LFO)
+# predelay = 30  # Milliseconds (offset of LFO)
+
+# wet = 50  # Percent wet (dry = 100 - wet)
+
+# # Initialize output signal
+# N = len(x)
+# out = np.zeros(N)
+
+# for n in range(N):
+#     # Use chorusEffect function
+#     out[n], buffer = chorusEffect(x[n], buffer, Fs, n, depth, rate, predelay, wet)
+
+# out = out * 10000
+# write_raw(filename = file_out, f_samples = out, effect = "chorus")
