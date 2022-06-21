@@ -1,0 +1,15 @@
+CC = gcc
+OPTIONS = -fopenmp -O3
+TARGETS = c_effects.perf c_effectsV2.perf
+
+
+all: ${TARGETS}
+
+c_effects.perf: c_effects.c c_effects.h
+	${CC} -Wall -pg c_effects.c -o perf/c_effects.perf
+        
+c_effectsV2.perf: c_effectsV2.c c_effects.h
+	${CC} -Wall -pg ${OPTIONS} c_effectsV2.c -o perf/c_effectsV2.perf
+
+clean:
+	rm -rf perf/*

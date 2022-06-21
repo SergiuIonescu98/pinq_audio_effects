@@ -52,6 +52,18 @@ def write_samples(wave_file, samples, sample_width):
     wave_file.writeframes(frame_data)
     return wave_file
 
+def oneChannel(fname, chanIdx):
+    f = wave.open(fname, 'rb')
+    chans = f.getnchannels()
+    samps = f.getnframes()
+    sampwidth = f.getsampwidth()
+    #assert sampwidth == 2
+    s = f.readframes(samps) #read the all the samples from the file into a byte string
+    f.close()
+    unpstr = '<{0}h'.format(samps*chans) #little-endian 16-bit samples
+    x = list(struct.unpack(unpstr, s)) #convert the byte string into a list of ints
+    return x[chanIdx::chans] #return the desired channel
+
 
 ################ WAV READ AND WRITE ##############
 
@@ -105,13 +117,13 @@ def write_raw(filename, f_samples, normalise = False, effect="", typeB='int16'):
                                                # 2 esantioane de 16 ca fiind unul singur de 32.
 
 
-def write_to_wav(filename, f_samples, framerate, effect="", play= False):
+def write_to_wav(filename, f_samples, framerate, effect="", nchannels=1, play= False):
 
     print("### WRITING TO WAV ###")
 
     filename = str(filename) + "_" + effect + ".wav"
     obj = wave.open(filename, 'w')
-    obj.setnchannels(2)
+    obj.setnchannels(nchannels) ## aparent si aici daca dai mai multe canale oarecum suprapune si se misca mai repede
     obj.setsampwidth(2)
     obj.setframerate(framerate)
     f_samples = normalise_16b(f_samples)
