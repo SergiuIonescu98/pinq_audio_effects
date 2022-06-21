@@ -90,17 +90,6 @@ def cubicDistortion(t, mysin, a, draw = False):
     
     return cubic
 
-# def piecewiseOverdrive(t, mysin, draw = False):
-
-#     N = len(mysin)
-#     overdrive = 
-
-## bitreduction ??  nu prea e interesant algoritmul
-
-
-### poate faci efecte paralelel ceva mai complex ca sa poti optimiza ??
-
-
 
 ################### echo effects  ######################## 
 # vezi care era faza cu convolutia. Poate pe aia o poti optimiza !!!
@@ -119,13 +108,15 @@ def seconds_to_samples(fs, timeS, unit='sec'):
     return timeSamples
 
 # bpm -> beats per minute. Cat de repede canta cred
-# noteDiv -> cat de mult dureaza o nota
+# noteDiv -> cat de mult dureaza o nota, cat de mult iei din BEAT. A cata parte din beat ( un intreg , jumate etc ?)
 def tempo_to_samples(fs, bpm, noteDiv):
 
     bps = bpm / 60 # beats per second
+    print("This is the bps", bps);
+
     secPerBeat = 1/bps
     timeSec = noteDiv * secPerBeat # practiv am convertit bpm to seconds tinand cont de noteDiv si bpm
-
+    print("TIME SEC ", timeSec)
     timeSamples = int(timeSec*fs)
     return timeSamples
 
@@ -138,7 +129,8 @@ def feedforward_echo(tempo_param, b, x):
     noteDiv = tempo_param[2]
     
     d = tempo_to_samples(fs, bpm, noteDiv)  ## asa calculam cate secunde va avea delayul.
-
+    print("## TEMPO VAL ##", d)
+    
     N = len(x)
     y = np.zeros([N, 1])
 
@@ -191,11 +183,14 @@ def linearBuffer(x, blen):
     N = np.size(x)
     out = np.zeros([N])
 
+    print(buffer)
     for n in range(N):
 
         out[n] = buffer[-1] # ultimul element din buffer vine primul la iesire
                             # sau buffer[delay] in cazul in care buffer e mai mare
         buffer = np.append(x[n], buffer[0:-1]) # shiftare la dreapta
+        ## buffer[0:-1] toate elementele mai putin ultimul
+        #print(buffer)
 
     np.disp(['The original signal was: ', str(x)])
     np.disp(['The final output signal is: ', str(out)])
@@ -261,12 +256,15 @@ def circularechoBuffer(x_sample, buffer, delay, index, fbGain):
 
 def vibratoEffect(x, buffer, Fs, n, depth, rate):
     # Calculate lfo(low freq osc) for current sample
-    print("## CALLING VIBRATO EFFECT ###")
+    #print("## CALLING VIBRATO EFFECT ###")
+    
     t = n/Fs
     lfo = (depth/2) * np.sin(2 * np.pi * rate * t) + depth ## iti returneaza o singura valoarea
     ## ptr ca t nu e un vector. Ci e un moment de timp ce variaza dupa frecveta de esantionare. n/Fs
-    print("## LFO VALUE ##")
-    print(lfo)
+    
+    #print("## LFO VALUE ##")
+    #print(lfo)
+    
     # depth = amplitutde of lfo -> how wide the range of pitches are changed
     # rate = freq of lfo -> how fast the pitch change
     # pitch = freq ? ( pitch senzatia subiectiva de frecevnta )
@@ -286,9 +284,10 @@ def vibratoEffect(x, buffer, Fs, n, depth, rate):
                                     ### acel n-lfo poate fi interpretat
                                     ### cati indecsi vrei sa dai in spate
                                     ### cat de intarziat sa fie semnalul
-    print("#####")
-    print(fracDelay)
-    print("#####")
+    #print("#####")
+    #print(fracDelay)
+    #print("#####")
+    
     intDelay = int(np.floor(fracDelay))  # Fractional delay indices---cat sa fie delayul. Indexul de iesire cum ar fi
     frac = fracDelay - intDelay ## cat la suta ne aproiem de urmatorul delay fata de cel normal
 
@@ -381,9 +380,3 @@ def chorusEffect(x, buffer, Fs, n, depth, rate, predelay, wet):
 
 # cu delay variat in paralel de maxim 50 ms creeaza un efect de cor
 # ptr ca in cor nimeni nu canta perfect..exista mini shiftari de pitch
-
-
-
-#### poate faci efectul ala cu filtru biquad de wah wah pedal
-#### si pastrezi efecte de vibrato chorus wah si distorsie cu parametrii poate
-#### ca astea cuprind cam tot ce ai invatat
